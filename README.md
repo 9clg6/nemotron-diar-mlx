@@ -164,6 +164,27 @@ with sd.InputStream(samplerate=16000, channels=1, dtype="float32",
 Feeding a recording in pieces gives the same result as processing it at once (bit-identical on CPU; within ~1e-6 on
 the GPU, whose kernels round slightly differently with the block size).
 
+### Live server
+
+Need diarization from another process or language? A small WebSocket server ships with the package:
+
+```bash
+pip install "nemotron-diar-mlx[server]"
+python -m nemotron_diar_mlx.server --port 8001 --preset low_latency
+```
+
+`GET /health` answers 200 once the model is loaded and warmed up. Each connection to `ws://127.0.0.1:8001/v1/diarize`
+is one session:
+
+- send **binary** messages of raw PCM (16-bit little-endian, mono, 16 kHz, any block size), then the text message
+  `{"type": "flush"}` at the end;
+- receive `{"type": "ready", "frame_duration": 0.01, "num_speakers": 8, "latency": 1.04}` on connect,
+  `{"type": "frames", "start_frame": n, "probs": [[...], ...]}` as frames are finalized (one row of per-speaker
+  probabilities per 10 ms, counted from the first sample sent), and `{"type": "done", "num_frames": n}` after the flush.
+
+The server queues audio while a chunk is computing and processes the backlog in one go, so a slow step delays the
+labels but never drops audio. `--parent-pid` makes it exit together with the app that launched it.
+
 ## How it works
 
 ```mermaid
@@ -213,8 +234,9 @@ base **Apple M1**, with 10 minutes of real multi-speaker speech fed in 0.5 s blo
 | `low_latency` | float32 | 2.9× real time | 209 s | 0.88 GB |
 
 An hour-long meeting takes about 30 seconds to diarize on the slowest Apple Silicon chip, in about half a gigabyte.
-Low-latency streaming keeps ahead of real time on average. On this virtual machine, however, a few individual `feed`
-calls took several seconds (up to 10 s), so measure on your hardware before relying on it for live captions.
+Low-latency streaming keeps ahead of real time on average (median `feed` of 0.5 s of audio: ~0.1 s, p95 ~0.4 s). On
+this shared virtual machine, however, about 1 % of `feed` calls took over a second and a handful took 5–8 s, spread
+over the whole run, so measure on your hardware before relying on it for live captions.
 Newer chips (M2–M4, Pro/Max) are faster.
 
 Run it on your own Mac with `python scripts/benchmark.py` (needs `soundfile` and `scipy`).

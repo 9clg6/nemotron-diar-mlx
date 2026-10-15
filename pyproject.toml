@@ -24,9 +24,11 @@ classifiers = [
 [project.optional-dependencies]
 # Reading 24-bit WAV / other formats in the CLI.
 audio = ["soundfile"]
+# Live diarization server (python -m nemotron_diar_mlx.server).
+server = ["websockets>=13"]
 # Converting a NeMo .nemo checkpoint (the Hugging Face path needs no PyTorch).
 nemo = ["torch", "pyyaml"]
-test = ["pytest"]
+test = ["pytest", "websockets>=13"]
 
 [project.urls]
 Repository = "https://github.com/9clg6/nemotron-diar-mlx"
