@@ -1,0 +1,31 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Minutes of audio"
+        default: "10"
+  push:
+    branches: [main]
+    paths: [".github/workflows/benchmark.yml", "scripts/benchmark.py"]
+
+jobs:
+  apple-silicon:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install -e . soundfile scipy
+      - name: Cache weights
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/nemotron-diar-mlx
+          key: nemotron3-diarization-weights-v1
+      - name: Benchmark
+        run: python scripts/benchmark.py --minutes "${{ github.event.inputs.minutes || '10' }}"
