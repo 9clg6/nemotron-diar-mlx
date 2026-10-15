@@ -84,14 +84,21 @@ def main() -> None:
             reset_peak_memory()
             diar = StreamingDiarizer(model)
             block = 16000 // 2  # 0.5 s, like a microphone callback
-            worst = 0.0
+            calls = []  # (duration, audio position in s)
             t0 = time.perf_counter()
             for i in range(0, len(audio), block):
                 t = time.perf_counter()
                 diar.feed(audio[i : i + block])
-                worst = max(worst, time.perf_counter() - t)
+                calls.append((time.perf_counter() - t, i / 16000))
             diar.flush()
             elapsed = time.perf_counter() - t0
+            durations = np.array([d for d, _ in calls])
+            worst = float(durations.max())
+            p50, p95, p99 = np.percentile(durations, [50, 95, 99])
+            slowest = sorted(calls, reverse=True)[:5]
+            print(f"{preset:>18} {dtype:>9}: feed p50 {p50 * 1000:.0f} ms, p95 {p95 * 1000:.0f} ms, "
+                  f"p99 {p99 * 1000:.0f} ms; slowest at " +
+                  ", ".join(f"{pos:.0f}s ({d * 1000:.0f} ms)" for d, pos in slowest), flush=True)
             rows.append((preset, dtype, seconds / elapsed, elapsed, worst, peak_memory_gb(), load))
             print(f"{preset:>18} {dtype:>9}: {seconds / elapsed:6.1f}x real time "
                   f"({elapsed:.1f} s for {seconds / 60:g} min), worst feed {worst * 1000:.0f} ms, "
