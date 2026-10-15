@@ -34,7 +34,11 @@ def test_incremental_features_equal_one_shot(seed):
     parts.append(np.array(inc.flush()))
     got = np.concatenate(parts)
     assert got.shape == (n, CFG.features)
-    np.testing.assert_array_equal(np.array(whole), got)
+    if mx.default_device() == mx.cpu:
+        np.testing.assert_array_equal(np.array(whole), got)
+    else:
+        # GPU kernels (Metal FFT / matmul) round differently with the batch size.
+        np.testing.assert_allclose(np.array(whole), got, rtol=1e-5, atol=1e-4)
 
 
 def test_hann_window_is_symmetric_hann():

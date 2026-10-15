@@ -68,7 +68,7 @@ for block in microphone_blocks():        # np.float32 at 16 kHz, any size
 show_last(diar.flush())
 ```
 
-The concatenated outputs are identical to a single call on the whole signal.
+The concatenated outputs match a single call on the whole signal (bit-identical on CPU; on the GPU, kernels round slightly differently with the block size, ~1e-6 relative).
 
 ## Who said what
 
