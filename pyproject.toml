@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nemotron-diar-mlx"
+version = "0.1.0"
+description = "NVIDIA Nemotron 3 Diarization (who spoke when, up to 8 speakers) on Apple Silicon with MLX"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Clément Guyon" }]
+# mlx does not publish wheels for Python 3.15 yet.
+requires-python = ">=3.10,<3.15"
+dependencies = ["mlx>=0.29", "numpy", "huggingface_hub>=0.24"]
+keywords = ["speaker-diarization", "mlx", "apple-silicon", "nemotron", "sortformer", "speech"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+# Reading 24-bit WAV / other formats in the CLI.
+audio = ["soundfile"]
+# Converting a NeMo .nemo checkpoint (the Hugging Face path needs no PyTorch).
+nemo = ["torch", "pyyaml"]
+test = ["pytest"]
+
+[project.urls]
+Repository = "https://github.com/9clg6/nemotron-diar-mlx"
+Model = "https://huggingface.co/nvidia/Nemotron-3-Diarization"
+
+[project.scripts]
+nemotron-diar-mlx = "nemotron_diar_mlx.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["nemotron_diar_mlx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
